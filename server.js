@@ -3,6 +3,9 @@ const Fastify = require("fastify");
 
 const fastify = Fastify({ logger: true });
 
+// Import user routes
+fastify.register(require("./routes/userRoutes"));
+
 fastify.get("/", async (request, reply) => {
   return { message: "Hello, Fastify!" };
 });
