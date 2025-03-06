@@ -41,6 +41,7 @@ npx prisma migrate deploy
 ```sh
 redis-server
 ```
+You must done this step using WSL if you're running on windows
 
 ### 6. Start the API server
 ```sh
