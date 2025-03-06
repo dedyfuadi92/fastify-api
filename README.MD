@@ -1,4 +1,6 @@
-# Fastify API with PostgreSQL, Prisma, JWT Authentication, and Redis Caching
+# NodeJs Starter Pack
+
+## RestAPI using Fastify with PostgreSQL, Prisma, JWT Authentication, and Redis Caching
 
 ## Project Overview
 This project is a Fastify-based REST API with the following features:
@@ -23,9 +25,6 @@ npm install
 Create a `.env` file and configure it with your database and Redis settings:
 ```env
 DATABASE_URL="postgresql://user:password@localhost:5433/fastify_db"
-JWT_SECRET="your_secret_key"
-REDIS_HOST=localhost
-REDIS_PORT=6379
 ```
 
 ### 4. Run database migrations
@@ -34,7 +33,7 @@ On development :
 npx prisma migrate dev
 ```
 
-On production :
+On production (if any tables and data already stored) :
 ```sh
 npx prisma migrate deploy
 ```
@@ -97,26 +96,6 @@ Authorization: Bearer <token>
 ```
 **Redis Caching**: If the user exists in Redis, cached data is returned; otherwise, data is fetched from the database and cached for 60 seconds.
 
-#### Create a new user
-```http
-POST /users
-Authorization: Bearer <token>
-```
-Request body:
-```json
-{
-  "success": true,
-  "data": [
-    {
-        "id": 3,
-        "name": "Dedy Fuadi",
-        "email": "dedyfuadi92@gmail.com"
-    }
-  ]
-}
-```
-**Cache Handling**: The `users` cache is deleted to ensure fresh data.
-
 #### Update a user
 ```http
 PUT /users/:id
@@ -130,7 +109,7 @@ Request body:
     "id": 11,
     "name": "Maimunah Baru",
     "email": "maimunahbaru@example.com",
-    "password": "$2b$10$ht40LvdSo.m4wmyyFM1njuTN45Qevy95HkGZyTqXnsYPM77Ntqri2",
+    "password": "your_pwd_bcrypt_here",
     "createdAt": "2025-03-06T04:12:10.971Z"
   }
 }
@@ -146,7 +125,7 @@ Authorization: Bearer <token>
 
 ## Redis Cache Handling
 ### When to Delete Cache:
-- **After creating a new user** → `redis.del("users")`
+- **After register a new user** → `redis.del("users")`
 - **After updating a user** → `redis.del("users")` and `redis.del("user:{id}")`
 - **After deleting a user** → `redis.del("users")` and `redis.del("user:{id}")`
 
