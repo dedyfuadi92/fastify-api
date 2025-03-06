@@ -29,8 +29,14 @@ REDIS_PORT=6379
 ```
 
 ### 4. Run database migrations
+On development :
 ```sh
-npx prisma migrate dev --name init
+npx prisma migrate dev
+```
+
+On production :
+```sh
+npx prisma migrate deploy
 ```
 
 ### 5. Start Redis server (if not running)
@@ -52,9 +58,8 @@ POST /register
 Request body:
 ```json
 {
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "securepassword"
+  "success":true,
+  "message":"User registered"
 }
 ```
 
@@ -72,6 +77,7 @@ Request body:
 Response:
 ```json
 {
+  "success": true,
   "token": "jwt_token_here"
 }
 ```
@@ -99,8 +105,14 @@ Authorization: Bearer <token>
 Request body:
 ```json
 {
-  "name": "Jane Doe",
-  "email": "jane@example.com"
+  "success": true,
+  "data": [
+    {
+        "id": 3,
+        "name": "Dedy Fuadi",
+        "email": "dedyfuadi92@gmail.com"
+    }
+  ]
 }
 ```
 **Cache Handling**: The `users` cache is deleted to ensure fresh data.
@@ -113,7 +125,14 @@ Authorization: Bearer <token>
 Request body:
 ```json
 {
-  "name": "Jane Updated"
+  "success": true,
+  "data": {
+    "id": 11,
+    "name": "Maimunah Baru",
+    "email": "maimunahbaru@example.com",
+    "password": "$2b$10$ht40LvdSo.m4wmyyFM1njuTN45Qevy95HkGZyTqXnsYPM77Ntqri2",
+    "createdAt": "2025-03-06T04:12:10.971Z"
+  }
 }
 ```
 **Cache Handling**: The specific user's cache (`user:{id}`) is deleted, and the `users` cache is also cleared.
