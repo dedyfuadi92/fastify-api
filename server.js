@@ -2,6 +2,15 @@ require("dotenv").config();
 const Fastify = require("fastify");
 
 const fastify = Fastify({ logger: true });
+// rate limiter
+fastify.register(require("@fastify/rate-limit"), {
+  max: 10, // Maksimal 10 request
+  timeWindow: "1 minute", // Dalam 1 menit
+});
+
+fastify.get("/protected", async (request, reply) => {
+  return { message: "This is a protected route!" };
+});
 // Register JWT Plugin
 fastify.register(require("@fastify/jwt"), {
   secret: process.env.JWT_SECRET || "supersecretkey",

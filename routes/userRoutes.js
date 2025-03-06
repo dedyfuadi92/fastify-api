@@ -1,5 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
+const redis = require("../redis");
 
 module.exports = async function (fastify, options) {
   // Get all users
@@ -23,6 +24,13 @@ module.exports = async function (fastify, options) {
     { preHandler: fastify.authenticate },
     async (request, reply) => {
       const { id } = request.params;
+      // Cek apakah data sudah ada di cache
+      const cachedUser = await redis.get(`user:${id}`);
+      if (cachedUser) {
+        // return reply.send(JSON.parse(cachedUser)); // Kirim data dari cache
+        return { success: true, data: JSON.parse(cachedUser) };
+      }
+      // Jika tidak ada di cache, ambil dari database
       const user = await prisma.user.findUnique({
         where: { id: parseInt(id) },
       });
@@ -30,6 +38,8 @@ module.exports = async function (fastify, options) {
         return reply
           .code(404)
           .send({ success: false, message: "User not found" });
+      // Simpan ke Redis dengan waktu kadaluarsa 1 menit (60 detik)
+      await redis.set(`user:${id}`, JSON.stringify(user), "EX", 60);
       return { success: true, data: user };
     }
   );
