@@ -129,6 +129,28 @@ Authorization: Bearer <token>
 - **After updating a user** → `redis.del("users")` and `redis.del("user:{id}")`
 - **After deleting a user** → `redis.del("users")` and `redis.del("user:{id}")`
 
+## Deployment Guide
+### Using PM2 for Process Management
+```sh
+npm install -g pm2
+pm2 --version
+pm2 start server.js --name fastify-api
+pm2 save
+```
+
+### Laravel Forge Nginx Configuration
+Ensure you're modify /etc/nginx/sites-available/example.com
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection 'upgrade';
+    proxy_set_header Host $host;
+    proxy_cache_bypass $http_upgrade;
+}
+```
+
 ## License
 This project is licensed under the MIT License.
 
