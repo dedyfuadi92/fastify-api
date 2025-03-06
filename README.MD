@@ -1,6 +1,5 @@
 # NodeJs Starter Pack
-
-## RestAPI using Fastify with PostgreSQL, Prisma, JWT Authentication, and Redis Caching
+RestAPI using Fastify with PostgreSQL, Prisma, JWT Authentication, and Redis Caching
 
 ## Project Overview
 This project is a Fastify-based REST API with the following features:
