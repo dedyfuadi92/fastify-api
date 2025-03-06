@@ -2,13 +2,26 @@ require("dotenv").config();
 const Fastify = require("fastify");
 
 const fastify = Fastify({ logger: true });
-
-// Import user routes
-fastify.register(require("./routes/userRoutes"));
-
+// Register JWT Plugin
+fastify.register(require("@fastify/jwt"), {
+  secret: process.env.JWT_SECRET || "supersecretkey",
+});
+// Middleware untuk proteksi endpoint
+fastify.decorate("authenticate", async (request, reply) => {
+  try {
+    await request.jwtVerify();
+  } catch (err) {
+    reply.code(401).send({ success: false, message: "Unauthorized" });
+  }
+});
+// halaman utama
 fastify.get("/", async (request, reply) => {
   return { message: "Hello, Fastify!" };
 });
+// Import auth routes
+fastify.register(require("./routes/authRoutes"));
+// Import user routes
+fastify.register(require("./routes/userRoutes"));
 
 const start = async () => {
   try {
