@@ -1,100 +1,139 @@
-# Fastify API with Redis Caching and Rate Limiting
+# Fastify API with PostgreSQL, Prisma, JWT Authentication, and Redis Caching
 
-This is a high-performance REST API built using Fastify, PostgreSQL, Prisma, Redis for caching, and Rate Limiting for security.
+## Project Overview
+This project is a Fastify-based REST API with the following features:
+- User authentication with JWT
+- PostgreSQL database using Prisma ORM
+- Redis caching for optimized performance
+- API rate limiting for security
 
-## Features
-- **Fastify Framework**: Lightweight and high-performance Node.js framework.
-- **PostgreSQL & Prisma**: Database management with an ORM.
-- **JWT Authentication**: Secure authentication system.
-- **Redis Caching**: Improve API performance by caching user data.
-- **Rate Limiting**: Prevent abuse by limiting requests per user.
-
-## Installation
-### Prerequisites
-Make sure you have the following installed:
-- [Node.js](https://nodejs.org/) (>=16)
-- [PostgreSQL](https://www.postgresql.org/)
-- [Redis](https://redis.io/)
-- [WSL (For Windows)](https://learn.microsoft.com/en-us/windows/wsl/install)
-
-### Clone the Repository
+## Installation & Setup
+### 1. Clone the repository
 ```sh
-git clone https://github.com/your-username/fastify-api.git
+git clone https://github.com/dedyfuadi/fastify-api.git
 cd fastify-api
 ```
 
-### Install Dependencies
+### 2. Install dependencies
 ```sh
 npm install
 ```
 
-### Configure Environment Variables
-Create a `.env` file in the root directory and set the required values:
+### 3. Setup environment variables
+Create a `.env` file and configure it with your database and Redis settings:
 ```env
-DATABASE_URL="postgresql://user:password@localhost:5432/fastify_db"
+DATABASE_URL="postgresql://user:password@localhost:5433/fastify_db"
 JWT_SECRET="your_secret_key"
-REDIS_HOST=127.0.0.1
+REDIS_HOST=localhost
 REDIS_PORT=6379
-RATE_LIMIT_MAX=100
-RATE_LIMIT_WINDOW=60000
 ```
 
-## Database Setup
-Run the following Prisma commands to initialize the database:
+### 4. Run database migrations
 ```sh
 npx prisma migrate dev --name init
-npx prisma generate
 ```
 
-## Running the API Server
-Start the Fastify server:
+### 5. Start Redis server (if not running)
 ```sh
-npm start
+redis-server
 ```
 
-Or in development mode with auto-reload:
+### 6. Start the API server
 ```sh
 npm run dev
 ```
 
 ## API Endpoints
-
 ### Authentication
-| Method | Endpoint      | Description        |
-|--------|-------------|--------------------|
-| POST   | `/register` | Register a new user |
-| POST   | `/login`    | User login         |
-
-### User Management
-| Method | Endpoint   | Description  |
-|--------|-----------|--------------|
-| GET    | `/users`  | Get all users (cached with Redis) |
-| GET    | `/users/:id` | Get user by ID (cached with Redis) |
-| POST   | `/users`  | Create a new user |
-
-## Redis Caching
-The API caches user data in Redis to reduce database queries.
-- **Users List (`/users`)**: Cached for 1 minute.
-- **Single User (`/users/:id`)**: Cached for 1 minute.
-- Cache is **automatically cleared** when a user is created or updated.
-
-## Rate Limiting
-To prevent API abuse, rate limiting is applied:
-- **Max Requests:** 100 requests per minute.
-- If exceeded, a `429 Too Many Requests` response is returned.
-
-## Testing
-Run the tests using:
-```sh
-npm test
+#### Register a new user
+```http
+POST /register
+```
+Request body:
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "securepassword"
+}
 ```
 
-## Deployment
-To deploy this API, ensure Redis and PostgreSQL are properly configured in your production environment.
+#### Login
+```http
+POST /login
+```
+Request body:
+```json
+{
+  "email": "john@example.com",
+  "password": "securepassword"
+}
+```
+Response:
+```json
+{
+  "token": "jwt_token_here"
+}
+```
+
+### User Management
+#### Get all users (cached with Redis)
+```http
+GET /users
+Authorization: Bearer <token>
+```
+**Redis Caching**: If users exist in Redis, the cached data is returned. If not, data is fetched from the database and cached for 60 seconds.
+
+#### Get a user by ID (cached with Redis)
+```http
+GET /users/:id
+Authorization: Bearer <token>
+```
+**Redis Caching**: If the user exists in Redis, cached data is returned; otherwise, data is fetched from the database and cached for 60 seconds.
+
+#### Create a new user
+```http
+POST /users
+Authorization: Bearer <token>
+```
+Request body:
+```json
+{
+  "name": "Jane Doe",
+  "email": "jane@example.com"
+}
+```
+**Cache Handling**: The `users` cache is deleted to ensure fresh data.
+
+#### Update a user
+```http
+PUT /users/:id
+Authorization: Bearer <token>
+```
+Request body:
+```json
+{
+  "name": "Jane Updated"
+}
+```
+**Cache Handling**: The specific user's cache (`user:{id}`) is deleted, and the `users` cache is also cleared.
+
+#### Delete a user
+```http
+DELETE /users/:id
+Authorization: Bearer <token>
+```
+**Cache Handling**: When a user is deleted, `user:{id}` is removed from Redis, and `users` cache is cleared.
+
+## Redis Cache Handling
+### When to Delete Cache:
+- **After creating a new user** → `redis.del("users")`
+- **After updating a user** → `redis.del("users")` and `redis.del("user:{id}")`
+- **After deleting a user** → `redis.del("users")` and `redis.del("user:{id}")`
 
 ## License
 This project is licensed under the MIT License.
 
 ## Author
-[Your Name](https://github.com/your-username)
+**Dedy Fuadi**
 
