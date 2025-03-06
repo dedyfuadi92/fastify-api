@@ -13,8 +13,18 @@ module.exports = async function (fastify, options) {
     "/users",
     { preHandler: fastify.authenticate },
     async (request, reply) => {
+      // Cek apakah data sudah ada di Redis
+      const cachedUsers = await redis.get("users");
+      if (cachedUsers) {
+        // Jika ada di Redis, parse kembali ke objek & kirim ke response
+        return { success: true, data: JSON.parse(cachedUsers) };
+      }
       const users = await prisma.user.findMany();
-      return { success: true, data: users };
+      // Hapus password dari setiap user dalam array
+      const usersWithoutPassword = users.map(({ password, createdAt, ...rest }) => rest);
+      // Simpan hasilnya ke Redis dengan kadaluarsa 1 menit (60 detik)
+      await redis.set("users", JSON.stringify(usersWithoutPassword), "EX", 60);
+      return { success: true, data: usersWithoutPassword };
     }
   );
 
@@ -27,8 +37,9 @@ module.exports = async function (fastify, options) {
       // Cek apakah data sudah ada di cache
       const cachedUser = await redis.get(`user:${id}`);
       if (cachedUser) {
-        // return reply.send(JSON.parse(cachedUser)); // Kirim data dari cache
-        return { success: true, data: JSON.parse(cachedUser) };
+        const userWithoutPassword = JSON.parse(cachedUser);
+        delete userWithoutPassword.password; // Hapus password sebelum dikirim
+        return { success: true, data: userWithoutPassword };
       }
       // Jika tidak ada di cache, ambil dari database
       const user = await prisma.user.findUnique({
@@ -38,9 +49,12 @@ module.exports = async function (fastify, options) {
         return reply
           .code(404)
           .send({ success: false, message: "User not found" });
+      // Hapus password sebelum menyimpan ke Redis dan mengembalikan respons
+      const { password, ...userWithoutPassword } = user;
+
       // Simpan ke Redis dengan waktu kadaluarsa 1 menit (60 detik)
-      await redis.set(`user:${id}`, JSON.stringify(user), "EX", 60);
-      return { success: true, data: user };
+      await redis.set(`user:${id}`, JSON.stringify(userWithoutPassword), "EX", 60);
+      return { success: true, data: userWithoutPassword };
     }
   );
 
