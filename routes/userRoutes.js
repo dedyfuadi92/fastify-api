@@ -9,6 +9,7 @@ module.exports = async function (fastify, options) {
   //   return { success: true, data: users };
   // });
   // menggunakan jwt auth
+  // get all users
   fastify.get(
     "/users",
     { preHandler: fastify.authenticate },
@@ -19,7 +20,9 @@ module.exports = async function (fastify, options) {
         // Jika ada di Redis, parse kembali ke objek & kirim ke response
         return { success: true, data: JSON.parse(cachedUsers) };
       }
-      const users = await prisma.user.findMany();
+      const users = await prisma.user.findMany({
+        orderBy: { id: "asc" }, // Urutkan dari ID terkecil ke terbesar
+      });
       // Hapus password dari setiap user dalam array
       const usersWithoutPassword = users.map(({ password, createdAt, ...rest }) => rest);
       // Simpan hasilnya ke Redis dengan kadaluarsa 1 menit (60 detik)
@@ -66,6 +69,7 @@ module.exports = async function (fastify, options) {
       const { name, email } = request.body;
       try {
         const newUser = await prisma.user.create({ data: { name, email } });
+        await redis.del("users"); // Hapus cache list users
         return reply.code(201).send({ success: true, data: newUser });
       } catch (error) {
         return reply
@@ -87,6 +91,9 @@ module.exports = async function (fastify, options) {
           where: { id: parseInt(id) },
           data: { name, email },
         });
+        // Hapus cache lama di Redis
+        await redis.del(`user:${id}`); // Hapus cache user by ID
+        await redis.del("users"); // Hapus cache list users
         return { success: true, data: updatedUser };
       } catch (error) {
         return reply
@@ -104,6 +111,8 @@ module.exports = async function (fastify, options) {
       const { id } = request.params;
       try {
         await prisma.user.delete({ where: { id: parseInt(id) } });
+        // Hapus cache lama di Redis
+        await redis.del("users"); // Hapus cache list users
         return { success: true, message: "User deleted" };
       } catch (error) {
         return reply
