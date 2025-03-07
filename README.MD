@@ -27,12 +27,6 @@ DATABASE_URL="postgresql://user:password@localhost:5433/fastify_db"
 ```
 
 ### 4. Run database migrations
-On development :
-```sh
-npx prisma migrate dev
-```
-
-On production (if any tables and data already stored) :
 ```sh
 npx prisma migrate deploy
 ```
