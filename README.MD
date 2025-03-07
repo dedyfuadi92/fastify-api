@@ -51,6 +51,14 @@ POST /register
 Request body:
 ```json
 {
+  "name":"John Doe",
+  "email":"testing@email.com",
+  "password":"your_password_here"
+}
+```
+Response:
+```json
+{
   "success":true,
   "message":"User registered"
 }
@@ -64,7 +72,7 @@ Request body:
 ```json
 {
   "email": "john@example.com",
-  "password": "securepassword"
+  "password": "your_password_here"
 }
 ```
 Response:
