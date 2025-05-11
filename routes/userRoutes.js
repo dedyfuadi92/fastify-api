@@ -18,16 +18,24 @@ module.exports = async function (fastify, options) {
       const cachedUsers = await redis.get("users");
       if (cachedUsers) {
         // Jika ada di Redis, parse kembali ke objek & kirim ke response
-        return { success: true, data: JSON.parse(cachedUsers) };
+        return {
+          success: true,
+          data: JSON.parse(cachedUsers)
+        };
       }
       const users = await prisma.user.findMany({
         orderBy: { id: "asc" }, // Urutkan dari ID terkecil ke terbesar
       });
       // Hapus password dari setiap user dalam array
-      const usersWithoutPassword = users.map(({ password, createdAt, ...rest }) => rest);
+      const usersWithoutPassword = users.map(({
+        password, createdAt, ...rest
+      }) => rest);
       // Simpan hasilnya ke Redis dengan kadaluarsa 1 menit (60 detik)
       await redis.set("users", JSON.stringify(usersWithoutPassword), "EX", 60);
-      return { success: true, data: usersWithoutPassword };
+      return {
+        success: true,
+        data: usersWithoutPassword
+      };
     }
   );
 
@@ -42,22 +50,33 @@ module.exports = async function (fastify, options) {
       if (cachedUser) {
         const userWithoutPassword = JSON.parse(cachedUser);
         delete userWithoutPassword.password; // Hapus password sebelum dikirim
-        return { success: true, data: userWithoutPassword };
+        return {
+          success: true,
+          data: userWithoutPassword
+        };
       }
       // Jika tidak ada di cache, ambil dari database
       const user = await prisma.user.findUnique({
-        where: { id: parseInt(id) },
+        where: {
+          id: parseInt(id)
+        },
       });
       if (!user)
         return reply
           .code(404)
-          .send({ success: false, message: "User not found" });
+          .send({
+            success: false,
+            message: "User not found"
+          });
       // Hapus password sebelum menyimpan ke Redis dan mengembalikan respons
       const { password, ...userWithoutPassword } = user;
 
       // Simpan ke Redis dengan waktu kadaluarsa 1 menit (60 detik)
       await redis.set(`user:${id}`, JSON.stringify(userWithoutPassword), "EX", 60);
-      return { success: true, data: userWithoutPassword };
+      return {
+        success: true,
+        data: userWithoutPassword
+      };
     }
   );
 
@@ -68,13 +87,22 @@ module.exports = async function (fastify, options) {
     async (request, reply) => {
       const { name, email } = request.body;
       try {
-        const newUser = await prisma.user.create({ data: { name, email } });
+        const newUser = await prisma.user.create({
+          data: { name, email }
+        });
+        // Hapus cache lama di Redis
         await redis.del("users"); // Hapus cache list users
-        return reply.code(201).send({ success: true, data: newUser });
+        return reply.code(201).send({
+          success: true,
+          data: newUser
+        });
       } catch (error) {
         return reply
           .code(400)
-          .send({ success: false, message: "Email already exists" });
+          .send({
+            success: false,
+            message: "Email already exists"
+          });
       }
     }
   );
@@ -88,17 +116,28 @@ module.exports = async function (fastify, options) {
       const { name, email } = request.body;
       try {
         const updatedUser = await prisma.user.update({
-          where: { id: parseInt(id) },
-          data: { name, email },
+          where: {
+            id: parseInt(id)
+          },
+          data: {
+            name,
+            email
+          },
         });
         // Hapus cache lama di Redis
         await redis.del(`user:${id}`); // Hapus cache user by ID
         await redis.del("users"); // Hapus cache list users
-        return { success: true, data: updatedUser };
+        return {
+          success: true,
+          data: updatedUser
+        };
       } catch (error) {
         return reply
           .code(404)
-          .send({ success: false, message: "User not found" });
+          .send({
+            success: false,
+            message: "User not found"
+          });
       }
     }
   );
@@ -110,14 +149,24 @@ module.exports = async function (fastify, options) {
     async (request, reply) => {
       const { id } = request.params;
       try {
-        await prisma.user.delete({ where: { id: parseInt(id) } });
+        await prisma.user.delete({
+          where: {
+            id: parseInt(id)
+          }
+        });
         // Hapus cache lama di Redis
         await redis.del("users"); // Hapus cache list users
-        return { success: true, message: "User deleted" };
+        return {
+          success: true,
+          message: "User deleted"
+        };
       } catch (error) {
         return reply
           .code(404)
-          .send({ success: false, message: "User not found" });
+          .send({
+            success: false,
+            message: "User not found"
+          });
       }
     }
   );

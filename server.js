@@ -9,7 +9,9 @@ fastify.register(require("@fastify/rate-limit"), {
 });
 
 fastify.get("/protected", async (request, reply) => {
-  return { message: "This is a protected route!" };
+  return {
+    message: "This is a protected route!"
+  };
 });
 // Register JWT Plugin
 fastify.register(require("@fastify/jwt"), {
@@ -20,12 +22,17 @@ fastify.decorate("authenticate", async (request, reply) => {
   try {
     await request.jwtVerify();
   } catch (err) {
-    reply.code(401).send({ success: false, message: "Unauthorized" });
+    reply.code(401).send({
+      success: false,
+      message: "Unauthorized"
+    });
   }
 });
 // halaman utama
 fastify.get("/", async (request, reply) => {
-  return { message: "Hello, Fastify!" };
+  return {
+    message: "Hello, Fastify!"
+  };
 });
 // Import auth routes
 fastify.register(require("./routes/authRoutes"));
