@@ -23,7 +23,7 @@ npm install
 ### 3. Setup environment variables
 Create a `.env` file and configure it with your database and Redis settings:
 ```env
-DATABASE_URL="postgresql://user:password@localhost:5433/fastify_db"
+DATABASE_URL="postgresql://user:password@localhost:5432/fastify_db"
 ```
 
 ### 4. Run database migrations
